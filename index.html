@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#080b12">
+  <title>THE WAG</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: #080b12;
+      color: #ffffff;
+      font-family: Arial, sans-serif;
+      padding-bottom: 90px;
+    }
+
+    header {
+      padding: 24px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo {
+      width: 52px;
+      height: 52px;
+      background: #087cff;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 30px;
+    }
+
+    header h1 {
+      font-size: 24px;
+      letter-spacing: 2px;
+    }
+
+    header p {
+      color: #8b95a7;
+      font-size: 12px;
+      margin-top: 5px;
+    }
+
+    .container {
+      padding: 0 18px;
+    }
+
+    .welcome {
+      background: linear-gradient(135deg, #102b53, #101522);
+      border: 1px solid #174a89;
+      padding: 24px;
+      border-radius: 22px;
+      margin-bottom: 20px;
+    }
+
+    .welcome p {
+      color: #a8caff;
+      font-size: 14px;
+    }
+
+    .welcome h2 {
+      font-size: 27px;
+      margin: 12px 0;
+    }
+
+    .welcome button {
+      background: #087cff;
+      border: none;
+      padding: 12px 20px;
+      color: white;
+      border-radius: 12px;
+      font-weight: bold;
+      margin-top: 15px;
+    }
+
+    .section-title {
+      font-size: 19px;
+      margin: 24px 0 14px;
+    }
+
+    .points-card {
+      background: #121824;
+      border: 1px solid #252f40;
+      border-radius: 18px;
+      padding: 22px;
+    }
+
+    .points-card p {
+      color: #929db0;
+      font-size: 14px;
+    }
+
+    .points {
+      color: #3c9bff;
+      font-size: 35px;
+      font-weight: bold;
+      margin: 12px 0;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .card {
+      background: #121824;
+      border: 1px solid #252f40;
+      border-radius: 16px;
+      padding: 18px 14px;
+      min-height: 125px;
+    }
+
+    .card .icon {
+      font-size: 27px;
+      margin-bottom: 13px;
+    }
+
+    .card h3 {
+      font-size: 15px;
+      margin-bottom: 6px;
+    }
+
+    .card p {
+      color: #929db0;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .task {
+      background: #121824;
+      border: 1px solid #252f40;
+      padding: 16px;
+      border-radius: 15px;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .task button {
+      background: #087cff;
+      color: white;
+      border: none;
+      border-radius: 9px;
+      padding: 10px 13px;
+    }
+
+    .task button:disabled {
+      background: #26364b;
+      color: #a8caff;
+    }
+
+    .task small {
+      color: #929db0;
+      display: block;
+      margin-top: 5px;
+    }
+
+    .invite-box {
+      background: #121824;
+      padding: 20px;
+      border-radius: 18px;
+      border: 1px solid #252f40;
+    }
+
+    .invite-box p {
+      color: #aab4c4;
+      line-height: 1.6;
+      font-size: 14px;
+      margin: 12px 0;
+    }
+
+    .invite-box button {
+      width: 100%;
+      padding: 14px;
+      background: #087cff;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-weight: bold;
+    }
+
+    .nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background: #0e131d;
+      border-top: 1px solid #263044;
+      display: flex;
+      justify-content: space-around;
+      padding: 12px 2px;
+      z-index: 10;
+    }
+
+    .nav button {
+      background: none;
+      border: none;
+      color: #8e9bb0;
+      font-size: 11px;
+      padding: 5px;
+    }
+
+    .nav button span {
+      display: block;
+      font-size: 21px;
+      margin-bottom: 5px;
+    }
+
+    .nav button.active {
+      color: #3294ff;
+    }
+
+    .page {
+      display: none;
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    .notice {
+      color: #8794a8;
+      font-size: 12px;
+      line-height: 1.6;
+      margin-top: 18px;
+      text-align: center;
+    }
+
+    .leader-row {
+      background: #121824;
+      border: 1px solid #252f40;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <div class="logo">🐶</div>
+    <div>
+      <h1>THE WAG</h1>
+      <p>PLAY • EARN • GROW</p>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <section id="home" class="page active">
+      <div class="welcome">
+        <p>🐾 WELCOME TO THE WAG</p>
+        <h2>Your journey starts here!</h2>
+        <p>Complete tasks, collect points and grow with our community.</p>
+        <button onclick="showPage('tasks')">Explore Tasks →</button>
+      </div>
+
+      <h2 class="section-title">Your Balance</h2>
+      <div class="points-card">
+        <p>TOTAL WAG POINTS</p>
+        <div class="points" id="balance">0 WAG</div>
+        <p>Keep going! More activities coming soon.</p>
+      </div>
+
+      <h2 class="section-title">Explore THE WAG</h2>
+      <div class="grid">
+        <div class="card" onclick="showPage('tasks')">
+          <div class="icon">🎯</div>
+          <h3>Daily Tasks</h3>
+          <p>Complete activities</p>
+        </div>
+
+        <div class="card" onclick="showPage('invite')">
+          <div class="icon">👥</div>
+          <h3>Invite Friends</h3>
+          <p>Grow the community</p>
+        </div>
+
+        <div class="card" onclick="showPage('leaderboard')">
+          <div class="icon">🏆</div>
+          <h3>Leaderboard</h3>
+          <p>See the rankings</p>
+        </div>
+
+        <div class="card" onclick="showPage('wallet')">
+          <div class="icon">💰</div>
+          <h3>Wallet</h3>
+          <p>View reward information</p>
+        </div>
+      </div>
+
+      <p class="notice">
+        WAG points are demo points for now. They are not cryptocurrency
+        and have no cash value.
+      </p>
+    </section>
+
+    <section id="tasks" class="page">
+      <h2 class="section-title">🎯 Tasks Center</h2>
+      <p style="color:#929db0;line-height:1.6;margin-bottom:18px">
+        Complete the demo tasks below to try the app.
+      </p>
+
+      <div class="task">
+        <div>
+          <strong>🐾 Welcome Task</strong>
+          <small>Claim your first 100 points</small>
+        </div>
+        <button onclick="claimTask('welcome',100,this)">Claim +100</button>
+      </div>
+
+      <div class="task">
+        <div>
+          <strong>⭐ Explore THE WAG</strong>
+          <small>Earn 50 demo points</small>
+        </div>
+        <button onclick="claimTask('explore',50,this)">Claim +50</button>
+      </div>
+
+      <div class="task">
+        <div>
+          <strong>🚀 Daily Check-in</strong>
+          <small>Earn 25 demo points</small>
+        </div>
+        <button onclick="claimTask('daily',25,this)">Claim +25</button>
+      </div>
+
+      <p class="notice">
+        These are local demo rewards. Secure server verification
+        will be needed before launching real rewards.
+      </p>
+    </section>
+
+    <section id="invite" class="page">
+      <h2 class="section-title">👥 Invite Friends</h2>
+
+      <div class="invite-box">
+        <h3>Grow THE WAG community!</h3>
+        <p>
+          Invite your friends to discover the app. Referral tracking
+          will be connected after we link your Telegram bot.
+        </p>
+        <button onclick="shareApp()">Share THE WAG</button>
+      </div>
+
+      <h2 class="section-title">Your Referrals</h2>
+      <div class="points-card">
+        <p>FRIENDS INVITED</p>
+        <div class="points">0</div>
+        <p>Referral counting is not active yet.</p>
+      </div>
+    </section>
+
+    <section id="leaderboard" class="page">
+      <h2 class="section-title">🏆 Leaderboard</h2>
+
+      <div class="leader-row">
+        <span>🥇 Wag Champion</span>
+        <strong>2,500</strong>
+      </div>
+
+      <div class="leader-row">
+        <span>🥈 Blue Paw</span>
+        <strong>1,800</strong>
+      </div>
+
+      <div class="leader-row">
+        <span>🥉 Dog Lover</span>
+        <strong>1,200</strong>
+      </div>
+
+      <p class="notice">
+        Sample leaderboard only. Real rankings will require a backend.
+      </p>
+    </section>
+
+    <section id="wallet" class="page">
+      <h2 class="section-title">💰 WAG Wallet</h2>
+
+      <div class="points-card">
+        <p>YOUR DEMO BALANCE</p>
+        <div class="points" id="walletBalance">0 WAG</div>
+        <p>Real wallet connection is not enabled.</p>
+      </div>
+
+      <h2 class="section-title">Reward Status</h2>
+
+      <div class="task">
+        <div>
+          <strong>🎁 WAG Rewards</strong>
+          <small>Future reward announcements</small>
+        </div>
+        <span>Coming soon</span>
+      </div>
+
+      <p class="notice">
+        No tokens or cash can currently be withdrawn from this demo.
+        Never enter your wallet recovery phrase into this app.
+      </p>
+    </section>
+
+  </main>
+
+  <nav class="nav">
+    <button class="active" onclick="showPage('home',this)">
+      <span>🏠</span>Home
+    </button>
+
+    <button onclick="showPage('tasks',this)">
+      <span>🎯</span>Tasks
+    </button>
+
+    <button onclick="showPage('invite',this)">
+      <span>👥</span>Invite
+    </button>
+
+    <button onclick="showPage('leaderboard',this)">
+      <span>🏆</span>Ranks
+    </button>
+
+    <button onclick="showPage('wallet',this)">
+      <span>💰</span>Wallet
+    </button>
+  </nav>
+
+  <script>
+    let balance = Number(localStorage.getItem("wagBalance") || 0);
+
+    let claimed = JSON.parse(
+      localStorage.getItem("wagClaimed") || "[]"
+    );
+
+    function updateBalance() {
+      document.getElementById("balance").textContent =
+        balance + " WAG";
+
+      document.getElementById("walletBalance").textContent =
+        balance + " WAG";
+
+      localStorage.setItem("wagBalance", balance);
+    }
+
+    function showPage(pageId, button) {
+      document.querySelectorAll(".page").forEach(function(page) {
+        page.classList.remove("active");
+      });
+
+      document.getElementById(pageId).classList.add("active");
+
+      document.querySelectorAll(".nav button").forEach(function(btn) {
+        btn.classList.remove("active");
+      });
+
+      if (button) {
+        button.classList.add("active");
+      } else {
+        document.querySelectorAll(".nav button").forEach(function(btn) {
+          if (btn.getAttribute("onclick").includes(pageId)) {
+            btn.classList.add("active");
+          }
+        });
+      }
+
+      window.scrollTo(0, 0);
+    }
+
+    function claimTask(taskId, points, button) {
+      if (claimed.includes(taskId)) {
+        alert("You have already claimed this demo task!");
+        return;
+      }
+
+      claimed.push(taskId);
+      balance += points;
+
+      localStorage.setItem("wagClaimed", JSON.stringify(claimed));
+
+      button.textContent = "Claimed ✓";
+      button.disabled = true;
+
+      updateBalance();
+
+      alert("Success! You received " + points + " demo WAG points.");
+    }
+
+    function shareApp() {
+      const shareText =
+        "Join THE WAG! Play, Earn & Grow with our community.";
+
+      if (navigator.share) {
+        navigator.share({
+          title: "THE WAG",
+          text: shareText
+        }).catch(function() {});
+      } else {
+        window.prompt("Copy this message to share:", shareText);
+      }
+    }
+
+    function restoreClaimedTasks() {
+      document.querySelectorAll(".task button").forEach(function(button) {
+        const action = button.getAttribute("onclick") || "";
+
+        claimed.forEach(function(taskId) {
+          if (action.includes("'" + taskId + "'")) {
+            button.textContent = "Claimed ✓";
+            button.disabled = true;
+          }
+        });
+      });
+    }
+
+    updateBalance();
+    restoreClaimedTasks();
+  </script>
+
+</body>
+</html>
