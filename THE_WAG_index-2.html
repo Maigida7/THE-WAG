@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#080b12">
+<title>THE WAG</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--bg:#080b12;--panel:#111827;--panel2:#172033;--blue:#28a8ff;--text:#f5f7fb;--muted:#9ca9bc;--line:#263247;--green:#35d07f}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at top,#10203a 0,#080b12 42%);color:var(--text);font-family:Arial, sans-serif;padding:18px 14px 96px}
+.wrap{max-width:680px;margin:auto}.top{display:flex;align-items:center;gap:12px;margin:8px 0 22px}.logo{width:54px;height:54px;border-radius:17px;background:linear-gradient(135deg,#28a8ff,#0756bd);display:grid;place-items:center;font-size:30px;box-shadow:0 8px 28px #168dff40}.brand{font-size:23px;font-weight:900;letter-spacing:1px}.sub{font-size:12px;color:var(--muted);margin-top:4px}.pill{margin-left:auto;border:1px solid var(--line);border-radius:20px;padding:8px 10px;font-size:12px;color:var(--muted)}
+.hero{background:linear-gradient(135deg,#102d53,#101827 75%);border:1px solid #21456e;border-radius:24px;padding:22px;margin-bottom:16px}.eyebrow{font-size:12px;color:#80caff;letter-spacing:1.5px;font-weight:bold}.balance{font-size:39px;font-weight:900;margin:9px 0 4px}.balance small{font-size:14px;color:#8ecfff}.muted{color:var(--muted);font-size:13px;line-height:1.5}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:14px 0}.stat,.card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:16px}.stat strong{display:block;font-size:20px;margin-bottom:5px}.stat span{font-size:12px;color:var(--muted)}.section-title{font-size:18px;font-weight:800;margin:24px 2px 12px}.task{display:flex;align-items:center;gap:12px;margin-bottom:10px}.task-icon{width:42px;height:42px;border-radius:13px;background:#142c49;display:grid;place-items:center;font-size:20px;flex-shrink:0}.task-info{flex:1;min-width:0}.task-info strong{display:block;font-size:14px;overflow-wrap:anywhere}.reward{font-size:12px;color:#78c8ff;margin-top:5px}.btn{border:0;border-radius:12px;background:var(--blue);color:#03101c;font-weight:800;padding:11px 14px;cursor:pointer}.btn:disabled{opacity:.45;cursor:not-allowed}.btn.secondary{background:#1d2b40;color:var(--text);border:1px solid #31415a}.wide{width:100%;margin-top:10px}.invite{overflow-wrap:anywhere;background:#0b1220;border:1px dashed #34506f;padding:12px;border-radius:12px;font-size:13px;color:#a8d9ff;margin:12px 0}.notice{font-size:12px;color:var(--muted);margin-top:12px;line-height:1.5}.status{padding:11px 13px;border-radius:12px;background:#111d2c;border:1px solid var(--line);font-size:13px;margin:12px 0;display:none}.status.show{display:block}.nav{position:fixed;bottom:0;left:0;right:0;background:#0a0e17f2;backdrop-filter:blur(14px);border-top:1px solid var(--line);display:flex;justify-content:center;gap:8px;padding:10px 8px calc(10px + env(safe-area-inset-bottom));z-index:5}.nav button{background:transparent;border:0;color:var(--muted);padding:8px 12px;border-radius:12px;font-size:12px}.nav button.active{background:#142c49;color:#8ed0ff}.hidden{display:none!important}a{color:#82ceff}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="logo">🐕</div>
+    <div><div class="brand">THE WAG</div><div class="sub">Community • Tasks • Rewards</div></div>
+    <div class="pill" id="connection">Connecting…</div>
+  </header>
+
+  <div id="status" class="status"></div>
+
+  <section id="home">
+    <div class="hero">
+      <div class="eyebrow">YOUR WAG POINTS</div>
+      <div class="balance"><span id="points">0</span> <small>WAG PTS</small></div>
+      <div class="muted">Complete available tasks and invite friends to grow your points.</div>
+      <button class="btn wide" onclick="showPage('tasks')">Explore tasks →</button>
+    </div>
+    <div class="grid">
+      <div class="stat"><strong id="taskCount">0</strong><span>Available tasks</span></div>
+      <div class="stat"><strong id="inviteCount">0</strong><span>Friends invited on this device</span></div>
+    </div>
+    <div class="card">
+      <strong>Welcome to THE WAG 🐾</strong>
+      <p class="muted">Your Telegram account is used when this app is opened inside Telegram. Open the app from @Thewagbot for the best experience.</p>
+    </div>
+  </section>
+
+  <section id="tasks" class="hidden">
+    <div class="section-title">🎯 Tasks</div>
+    <p class="muted">Tasks are loaded from your Supabase database when configuration and database permissions are ready.</p>
+    <div id="tasksList"></div>
+    <button class="btn secondary wide" onclick="loadTasks()">Refresh tasks</button>
+  </section>
+
+  <section id="invite" class="hidden">
+    <div class="section-title">👥 Invite friends</div>
+    <div class="card">
+      <strong>Share THE WAG</strong>
+      <p class="muted">Send your Telegram referral link to friends.</p>
+      <div class="invite" id="inviteLink">Open this app inside Telegram to create your referral link.</div>
+      <button class="btn wide" onclick="shareInvite()">Share invite link</button>
+      <p class="notice">Referral points must be verified on a secure server before they can be trusted.</p>
+    </div>
+  </section>
+
+  <section id="leaderboard" class="hidden">
+    <div class="section-title">🏆 Leaderboard</div>
+    <div class="card"><p class="muted">Leaderboard will appear after a secure points table and server-side scoring are configured.</p></div>
+  </section>
+
+  <section id="wallet" class="hidden">
+    <div class="section-title">👛 Wallet</div>
+    <div class="card">
+      <strong>Wallet status</strong>
+      <p class="muted">THE WAG points shown here are not cryptocurrency and cannot be withdrawn yet. Do not send funds or wallet seed phrases.</p>
+    </div>
+  </section>
+
+  <p class="notice">Setup note: replace the two configuration placeholders in this file with your Supabase Project URL and Publishable key. Never put a Supabase secret/service_role key in browser code.</p>
+</div>
+
+<nav class="nav">
+  <button class="active" data-page="home" onclick="showPage('home')">🏠 Home</button>
+  <button data-page="tasks" onclick="showPage('tasks')">🎯 Tasks</button>
+  <button data-page="invite" onclick="showPage('invite')">👥 Invite</button>
+  <button data-page="leaderboard" onclick="showPage('leaderboard')">🏆 Rank</button>
+  <button data-page="wallet" onclick="showPage('wallet')">👛 Wallet</button>
+</nav>
+
+<script>
+/* Paste your Supabase Project URL and Publishable key below.
+   Public/publishable keys are intended for browser use only when RLS policies are configured.
+   Never use a secret key or service_role key here. */
+const SUPABASE_URL = "PASTE_YOUR_SUPABASE_PROJECT_URL_HERE";
+const SUPABASE_PUBLISHABLE_KEY = "PASTE_YOUR_SUPABASE_PUBLISHABLE_KEY_HERE";
+
+const tg = window.Telegram?.WebApp;
+if (tg) { tg.ready(); tg.expand(); }
+const tgUser = tg?.initDataUnsafe?.user || null;
+const userId = tgUser?.id ? String(tgUser.id) : null;
+let db = null;
+let tasks = [];
+let claimedIds = new Set();
+let points = Number(localStorage.getItem("thewag_demo_points") || 0);
+let invited = Number(localStorage.getItem("thewag_demo_invites") || 0);
+document.getElementById("points").textContent = points.toLocaleString();
+document.getElementById("inviteCount").textContent = invited;
+document.getElementById("connection").textContent = "Demo mode";
+
+function setStatus(message) {
+  const el = document.getElementById("status");
+  el.textContent = message;
+  el.classList.add("show");
+}
+function showPage(page) {
+  ["home","tasks","invite","leaderboard","wallet"].forEach(p => {
+    document.getElementById(p).classList.toggle("hidden", p !== page);
+  });
+  document.querySelectorAll(".nav button").forEach(b => b.classList.toggle("active", b.dataset.page === page));
+}
+function configured() {
+  return SUPABASE_URL.startsWith("https://") &&
+    !SUPABASE_URL.includes("PASTE_") &&
+    SUPABASE_PUBLISHABLE_KEY.length > 20 &&
+    !SUPABASE_PUBLISHABLE_KEY.includes("PASTE_");
+}
+async function init() {
+  if (!configured()) {
+    setStatus("Supabase setup is not finished yet. Add your Project URL and Publishable key in the configuration section of index.html. Demo points only work on this device.");
+    renderTasks();
+    return;
+  }
+  try {
+    db = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+    document.getElementById("connection").textContent = "Supabase";
+    await loadTasks();
+  } catch (e) {
+    setStatus("Could not start Supabase. Check the Project URL and Publishable key.");
+  }
+}
+async function loadTasks() {
+  if (!db) { renderTasks(); return; }
+  const box = document.getElementById("tasksList");
+  box.innerHTML = '<div class="card muted">Loading tasks…</div>';
+  const { data, error } = await db.from("wag_tasks").select("id,title,reward,created_at").order("id", {ascending:true});
+  if (error) {
+    box.innerHTML = "";
+    setStatus("Could not load tasks. Check that wag_tasks exists and its Row Level Security (RLS) policy allows reading published tasks.");
+    return;
+  }
+  tasks = data || [];
+  document.getElementById("taskCount").textContent = tasks.length;
+  renderTasks();
+}
+function renderTasks() {
+  const box = document.getElementById("tasksList");
+  if (!tasks.length) {
+    box.innerHTML = '<div class="card muted">No tasks are available yet. Add task rows to public.wag_tasks in Supabase.</div>';
+    document.getElementById("taskCount").textContent = "0";
+    return;
+  }
+  box.innerHTML = "";
+  tasks.forEach(t => {
+    const row = document.createElement("div");
+    row.className = "card task";
+    const icon = document.createElement("div"); icon.className = "task-icon"; icon.textContent = "🐾";
+    const info = document.createElement("div"); info.className = "task-info";
+    const title = document.createElement("strong"); title.textContent = t.title || "WAG task";
+    const reward = document.createElement("div"); reward.className = "reward"; reward.textContent = `+${Number(t.reward || 0)} points`;
+    info.append(title, reward);
+    const btn = document.createElement("button"); btn.className = "btn secondary"; btn.textContent = "Claim";
+    btn.onclick = () => claimTask(t, btn);
+    row.append(icon, info, btn); box.appendChild(row);
+  });
+}
+async function claimTask(task, button) {
+  if (!db) {
+    points += Number(task.reward || 0);
+    localStorage.setItem("thewag_demo_points", String(points));
+    document.getElementById("points").textContent = points.toLocaleString();
+    button.textContent = "Demo ✓"; button.disabled = true;
+    setStatus("Demo only: points are saved on this device and are not verified or stored as real account rewards.");
+    return;
+  }
+  if (!userId) {
+    setStatus("Open THE WAG from Telegram (@Thewagbot) so Telegram can identify your account.");
+    return;
+  }
+  button.disabled = true;
+  const { error } = await db.from("wag_completions").insert({
+    telegram_id: userId,
+    task_id: task.id
+  });
+  if (error) {
+    button.disabled = false;
+    setStatus("Task claim was not saved. Database policies or duplicate-completion rules may need to be configured. Points were not added.");
+    return;
+  }
+  claimedIds.add(String(task.id));
+  button.textContent = "Submitted ✓";
+  setStatus("Task completion submitted. For secure rewards, points must be calculated by a trusted server, not by this page.");
+}
+function makeInviteLink() {
+  const botName = "Thewagbot";
+  const param = userId ? `?startapp=ref_${encodeURIComponent(userId)}` : "";
+  return `https://t.me/${botName}${param}`;
+}
+function shareInvite() {
+  const link = makeInviteLink();
+  if (tg?.openTelegramLink) tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent("Join THE WAG!")}`);
+  else if (navigator.share) navigator.share({title:"THE WAG", text:"Join THE WAG!", url:link}).catch(()=>{});
+  else { navigator.clipboard?.writeText(link); setStatus("Referral link copied if clipboard access was allowed."); }
+}
+document.getElementById("inviteLink").textContent = makeInviteLink();
+init();
+</script>
+</body>
+</html>
