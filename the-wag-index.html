@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#080b12">
+  <title>THE WAG</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root{--bg:#080b12;--panel:#111827;--panel2:#172033;--line:#293449;--blue:#28a8ff;--green:#35d07f;--muted:#9ca6b7;--text:#f4f7fb}
+    *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font:16px/1.45 system-ui,-apple-system,Segoe UI,sans-serif}
+    .wrap{max-width:680px;margin:auto;padding:22px 16px 34px}
+    .hero,.panel,.notice,.task{border:1px solid var(--line);border-radius:24px;background:var(--panel);padding:22px;margin-bottom:16px}
+    .hero h1{margin:0;color:var(--blue);font-size:clamp(30px,8vw,44px)} .muted{color:var(--muted)} .status{margin-top:16px;color:var(--muted);overflow-wrap:anywhere}
+    .notice{background:var(--panel2);border:0;border-radius:16px;padding:16px}
+    .points{font-size:48px;font-weight:800;color:var(--green);margin:8px 0}
+    .page-title{font-size:26px;margin:18px 0 14px}
+    .task{background:transparent;border-radius:20px;padding:20px}
+    .task h3{margin:0 0 12px;font-size:20px}.task p{margin:8px 0}
+    .btn{display:inline-block;border:0;border-radius:14px;padding:13px 17px;background:var(--blue);color:#071321;font-size:16px;font-weight:750;cursor:pointer;min-height:46px}
+    .btn:disabled{opacity:.55;cursor:not-allowed}
+    .nav{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin-top:22px}
+    .nav .btn{padding:12px 4px;font-size:14px}
+    .hidden{display:none!important}.row{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}.row:last-child{border-bottom:0}
+    .small{font-size:13px}.empty{color:var(--muted);padding:8px 0}
+    @media(max-width:380px){.nav{grid-template-columns:repeat(2,minmax(0,1fr))}.hero,.panel{padding:18px}}
+  </style>
+</head>
+<body>
+<main class="wrap">
+  <section class="hero">
+    <h1>🐺 THE WAG</h1>
+    <div class="muted">Community · Tasks · Rewards</div>
+    <div class="status" id="connection">Checking Supabase connection…</div>
+  </section>
+  <div class="notice" id="status" role="status" aria-live="polite">Starting THE WAG…</div>
+
+  <section id="home">
+    <div class="panel">
+      <div class="muted">YOUR WAG POINTS</div>
+      <div class="points" id="points">0</div>
+      <div class="muted" id="welcome">Open this Mini App inside Telegram to connect your account.</div>
+    </div>
+    <div class="panel"><strong id="taskCount">0</strong> <span class="muted">Available tasks</span></div>
+  </section>
+
+  <section id="tasks" class="hidden">
+    <h2 class="page-title">🎯 Tasks</h2>
+    <div id="taskList" class="empty">Loading tasks…</div>
+    <p class="muted small">Task rewards are not added automatically. Server-side task verification and claim processing must be configured before points can be awarded.</p>
+    <button class="btn" id="refreshTasks" type="button">Refresh tasks</button>
+  </section>
+
+  <section id="invite" class="hidden">
+    <h2 class="page-title">👥 Invite friends</h2>
+    <div class="panel">
+      <p>Invite your friends to THE WAG.</p>
+      <p class="muted">Referral rewards must be verified by the server.</p>
+      <button class="btn" id="shareInvite" type="button">Share invite link</button>
+      <p id="inviteLink" class="muted small"></p>
+    </div>
+  </section>
+
+  <section id="leaderboard" class="hidden">
+    <h2 class="page-title">🏆 Leaderboard</h2>
+    <div class="panel" id="leaderboardList">Loading leaderboard…</div>
+    <button class="btn" id="refreshRank" type="button">Refresh leaderboard</button>
+  </section>
+
+  <nav class="nav" aria-label="Main navigation">
+    <button class="btn" data-page="home" type="button">🏠 Home</button>
+    <button class="btn" data-page="tasks" type="button">🎯 Tasks</button>
+    <button class="btn" data-page="invite" type="button">👥 Invite</button>
+    <button class="btn" data-page="leaderboard" type="button">🏆 Rank</button>
+  </nav>
+</main>
+<script>
+(() => {
+  "use strict";
+
+  // SUPABASE CONFIGURATION: paste your Supabase project URL and Publishable key below.
+  // Never put a service_role key or Telegram bot token in this file.
+  const SUPABASE_URL = "https://pdgvreigeuwfvidzahph.supabase.co";
+  const SUPABASE_PUBLISHABLE_KEY = "PASTE_YOUR_SUPABASE_PUBLISHABLE_KEY_HERE";
+  const EDGE_FUNCTION_URL = SUPABASE_URL + "/functions/v1/hyper-action";
+  const BOT_USERNAME = "Thewagbot";
+
+  const $ = (id) => document.getElementById(id);
+  const tg = window.Telegram && window.Telegram.WebApp;
+  let db = null;
+  let tasks = [];
+  let telegramUser = null;
+  let userPoints = 0;
+
+  function status(message) { $("status").textContent = message; }
+  function configured() {
+    return SUPABASE_URL.startsWith("https://") &&
+      SUPABASE_PUBLISHABLE_KEY.startsWith("sb_publishable_") &&
+      !SUPABASE_PUBLISHABLE_KEY.includes("PASTE_YOUR");
+  }
+  function showPage(page) {
+    ["home","tasks","invite","leaderboard"].forEach(id => $(id).classList.toggle("hidden", id !== page));
+  }
+
+  async function loadTasks() {
+    if (!db) return;
+    const box = $("taskList");
+    box.textContent = "Loading tasks…";
+    try {
+      const { data, error } = await db.from("wag_tasks")
+        .select("id,title,reward,created_at").order("id", {ascending:true});
+      if (error) throw error;
+      tasks = data || [];
+      $("taskCount").textContent = String(tasks.length);
+      box.replaceChildren();
+      if (!tasks.length) {
+        box.textContent = "No tasks are available yet.";
+        box.className = "empty";
+        return;
+      }
+      box.className = "";
+      tasks.forEach(task => {
+        const card = document.createElement("article");
+        card.className = "task";
+        const title = document.createElement("h3");
+        title.textContent = task.title || "WAG Task";
+        const reward = document.createElement("p");
+        reward.className = "muted";
+        reward.textContent = "Reward: " + Number(task.reward || 0).toLocaleString() + " points";
+        const note = document.createElement("p");
+        note.className = "muted";
+        note.textContent = "Complete this task and follow the official verification process.";
+        card.append(title, reward, note);
+        box.appendChild(card);
+      });
+      status("Tasks loaded successfully.");
+    } catch (e) {
+      box.textContent = "Unable to load tasks. Check the wag_tasks table and its SELECT policy.";
+      status("Task loading failed: " + e.message);
+    }
+  }
+
+  async function connectTelegramAccount() {
+    if (!tg || !tg.initData) {
+      status("Open THE WAG from its Telegram bot to connect your account.");
+      return;
+    }
+    try {
+      const response = await fetch(EDGE_FUNCTION_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": SUPABASE_PUBLISHABLE_KEY,
+          "Authorization": "Bearer " + SUPABASE_PUBLISHABLE_KEY
+        },
+        body: JSON.stringify({initData: tg.initData})
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Telegram verification failed.");
+      if (result.user) {
+        telegramUser = result.user;
+        userPoints = Number(result.user.points || 0);
+        $("points").textContent = userPoints.toLocaleString();
+        const name = result.user.username ? "@" + result.user.username : "Telegram user";
+        $("welcome").textContent = "Connected as " + name + ".";
+      }
+      status("Telegram account verified.");
+    } catch (e) {
+      status("Telegram connection failed: " + e.message);
+    }
+  }
+
+  async function loadLeaderboard() {
+    const box = $("leaderboardList");
+    box.textContent = "Loading leaderboard…";
+    try {
+      const {data, error} = await db.from("wag_leaderboard")
+        .select("username,points,rank").order("rank", {ascending:true}).limit(50);
+      if (error) throw error;
+      box.replaceChildren();
+      if (!data || !data.length) {
+        box.textContent = "Leaderboard is empty until users have registered and earned points.";
+        return;
+      }
+      data.forEach(row => {
+        const item = document.createElement("div");
+        item.className = "row";
+        const left = document.createElement("span");
+        left.textContent = "#" + row.rank + "  " + (row.username || "WAG user");
+        const right = document.createElement("strong");
+        right.textContent = Number(row.points || 0).toLocaleString() + " pts";
+        item.append(left, right);
+        box.appendChild(item);
+      });
+    } catch (e) {
+      box.textContent = "Leaderboard could not load. Check the wag_leaderboard view permissions. " + e.message;
+    }
+  }
+
+  function shareInvite() {
+    if (!tg || !tg.initDataUnsafe || !tg.initDataUnsafe.user) {
+      status("Open THE WAG inside Telegram first to create your invite link.");
+      return;
+    }
+    const link = "https://t.me/" + BOT_USERNAME + "?start=" + encodeURIComponent(String(tg.initDataUnsafe.user.id));
+    $("inviteLink").textContent = link;
+    if (tg.openTelegramLink) {
+      tg.openTelegramLink("https://t.me/share/url?url=" + encodeURIComponent(link) + "&text=" + encodeURIComponent("Join me on THE WAG!"));
+    } else {
+      status("Invite link created: " + link);
+    }
+  }
+
+  async function init() {
+    if (tg) { tg.ready(); tg.expand(); }
+    if (!configured()) {
+      $("connection").textContent = "Setup required";
+      status("Paste your Supabase Publishable Key into index.html, then commit the changes.");
+      return;
+    }
+    try {
+      db = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+      $("connection").textContent = "Supabase connected";
+      await loadTasks();
+      if (tg && tg.initData) {
+        if (tg.initDataUnsafe && tg.initDataUnsafe.user) telegramUser = tg.initDataUnsafe.user;
+        await connectTelegramAccount();
+      } else {
+        status("Supabase connected. Open THE WAG inside Telegram to connect your account.");
+      }
+      await loadLeaderboard();
+    } catch (e) {
+      $("connection").textContent = "Connection error";
+      status("Could not start. Check your Supabase configuration. " + e.message);
+    }
+  }
+
+  document.querySelectorAll("[data-page]").forEach(button =>
+    button.addEventListener("click", () => {
+      const page = button.dataset.page;
+      showPage(page);
+      if (page === "tasks") loadTasks();
+      if (page === "leaderboard") loadLeaderboard();
+    })
+  );
+  $("refreshTasks").addEventListener("click", loadTasks);
+  $("refreshRank").addEventListener("click", loadLeaderboard);
+  $("shareInvite").addEventListener("click", shareInvite);
+  init();
+})();
+</script>
+</body>
+</html>
